@@ -2,9 +2,18 @@
 import conf
 import discord
 
+
+
+#Настраиваем расширенный доступ
+
+intense = discord.Intents.default()
+intense.members = True
+
+
+
+#Создаем подключение бота
 client = discord.Client()
-
-
+client = discord.Client(intents = intense)
 
 
 
@@ -24,14 +33,14 @@ async def on_message(message):
 
 
 
-#Проверка на дурка №1 - Отправитель бот
+    #Проверка на дурка №1 - Отправитель бот
     if message.author == client.user:
         return
 
 
 
 
-#Проверка на дурака №2 - Отправитель чужой бот
+    #Проверка на дурака №2 - Отправитель чужой бот
 
     if message.author.bot:
         return
@@ -41,30 +50,61 @@ async def on_message(message):
         #Ответ пользователю в формате "Hello, {user.name} - your message {user.content}"
         msg = None
 
-    # 'Hello, {message.author.name}! - your message {message.content}'
-    #     await message.channel.send(msg)
-
-    if message.content == "/hello":
-        msg = f"Hello, {message.author.name}. I am {client.user.name}"
-    elif message.content == "/about_me":
-        msg = f"Your name is {message.author.name}, your id is {message.author.id}"
-        if message.author.nick:
-            msg = "and your nickname is {author.user.nick}"
 
 
+
+        #Контекст содержит [команда, аргументы]
+        ctx = message.content.split(" ", maxsplit = 1)
+        
+
+        # 'Hello, {message.author.name}! - your message {message.content}'
+        #     await message.channel.send(msg)
+
+        
+
+
+
+
+
+
+
+        #1. /Hello - just a message
+
+
+
+        if message.content == "/hello":
+            msg = f'Hello, {message.author.name}. I am {client.user.name}'
+            # 2.   /about_me - сообщение  пользователю по его параметрам id/name (если есть ник то добавить "твой ник nick")
+        elif message.content == "/about_me":
+            msg = f'Your id is {message.author.id}'
+            if message.author.nick:
+                msg=f'and your nick is {message.author.nick}'
+        #3. /repeat [] - повторить за пользователем
+        elif ctx[0] == "/repeat":
+            
+            msg = ctx[1]
+        # 4. /get_member {id/name} - берём инфу по пользователю по типу about_me {если пусто != обрабатываем ошибку}
+        # elif message.content == "/get_member":
+        #     msg = f"User's name is {client.user.name}"
+
+        #     if message.author.nick:
+        #             msg=f"and Users's ID is {client.user.id}"
+        #     elif message.content == "/get_member" and " ":
+        #             msg = f"Enter User's name is {client.user.name}"
+
+        # 5. /get_members  - список всех пользователй по "1. name {nick} id"*(через webhook)
+        elif message.content == "/get_members":
+            msg = ""
+            if message.author.guild.name == "Bots":
+                
+                for idx, member in list(enumerate(message.author.guild.members)):
+                    msg += f'{idx+1}. {member.name} { f"[{member.nick}]"  if member.nick else "" } - {member.id}\n'
+                    
 
 
 # Отправляем сообщение если оно есть
-    if msg != None:
-        await message.channel.send(msg)
-
-
-#1. /Hello - just a message
-#2. /about_me - сообщение пользователя по его параметрам id/name (усли есть ник то добавить "Твой ник nick")
-#3. /repeat [] - повторить за пользователем
-
-
-
+        if msg:
+            await message.channel.send(msg)
 
 
 client.run(conf.bot_token)
